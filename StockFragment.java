@@ -67,8 +67,8 @@ public class StockFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        System.out.println("something");
-        Log.d("this", "this");
+        System.out.println("something Stock Frag");
+        Log.d("this", "Stock Frag launched");
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_stock, container, false);
     }

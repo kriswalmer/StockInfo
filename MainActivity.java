@@ -6,20 +6,33 @@ import android.app.ActionBar;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
+import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 
 public class MainActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
@@ -33,6 +46,8 @@ public class MainActivity extends Activity
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
+
+     static String s ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,6 +129,8 @@ public class MainActivity extends Activity
     public static class PlaceholderFragment extends Fragment {
 
         EditText et ;
+        String full = "";
+
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -143,26 +160,158 @@ public class MainActivity extends Activity
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_stock, container, false);
             et =    (EditText) rootView.findViewById(R.id.editText);
-            System.out.println("this");
+
+
+             ListView lv =  (ListView) rootView.findViewById(R.id.listView);
+                    System.out.println("this");
+            final WebView wv = (WebView) rootView.findViewById(R.id.webView);
+
+         /*  String currentChars  = et.getText().toString();
+            List<String> your_array_list = new ArrayList<String>();
+            your_array_list.add("foo");
+            your_array_list.add("bar");
+
+
+            ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                    this.getContext(),
+                    android.R.layout.simple_list_item_1,
+                    your_array_list );
+
+            lv.setAdapter(arrayAdapter);       */
 
             Button b1  = (Button)  rootView.findViewById(R.id.button);
+            Button b2  =  (Button) rootView.findViewById(R.id.button2);
+
+            View.OnClickListener oc2 = new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+
+                    s = et.getText().toString();
+                    System.out.println(s);
+
+                    wv.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            wv.loadUrl("http://finance.yahoo.com/rss/headline?s=" + s.toUpperCase());
+                        }
+                    });
+
+
+                }
+            };
+            b2.setOnClickListener(oc2);
+
 
             View.OnClickListener ocl =  new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
-                    String s = et.getText().toString();
+                    s = et.getText().toString();
                     System.out.println(s);
+
+                      Thread t  = new Thread (new Runnable() {
+            @Override
+            public void run() {
+
+
+                String urlStr = "http://finance.yahoo.com/webservice/v1/symbols/GOOG/quote?format=json&view=basic";
+// Heres to add a check for stock names
+                if(s.toUpperCase().equals("GOOG"))
+                {
+                    System.out.println("it was GOOG, wow!");
+                    urlStr = "http://finance.yahoo.com/webservice/v1/symbols/"+ s.toUpperCase() + "/quote?format=json&view=basic";
 
 
                 }
+                String stockSymbol = "" ;
+                String timeOfChange =  "" ;
+                try {
+                    URL url = new URL(urlStr);
+                    java.net.URLConnection con = url.openConnection();
+                    con.connect();
+                    java.io.BufferedReader in =
+                            new java.io.BufferedReader(new java.io.InputStreamReader(con.getInputStream()));
+                    String line;
+                    String newFullData = "";
+
+                    for (; (line = in.readLine()) != null; ) {
+
+                        newFullData += line ;
+
+
+                    }
+                    System.out.println(full);
+                    System.out.println(newFullData);
+                    if( full.compareTo(newFullData) != 0 )
+                    {
+                        full = newFullData;
+
+                        System.out.println("Data updated");
+
+                         stockSymbol = full.substring(full.indexOf("symbol")+ 11 , full.indexOf("symbol")+ 15) ;
+                        System.out.println(stockSymbol);
+
+                        Calendar cal = Calendar.getInstance();
+                        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+                        timeOfChange =  sdf.format(cal.getTime());
+                        System.out.println(timeOfChange);
+                    }
+
+
+
+                } catch (MalformedURLException e) {
+
+                    e.printStackTrace();
+                } catch (IOException e) {
+
+                    e.printStackTrace();
+                }
+
+
+// Searches for the stock and parses JSON
+                try {
+
+                    URL url = new URL("http://dev.markitondemand.com/MODApis/Api/v2/Lookup/json?input="+s);
+                    java.net.URLConnection con = url.openConnection();
+                    con.connect();
+                    java.io.BufferedReader in =
+                            new java.io.BufferedReader(new java.io.InputStreamReader(con.getInputStream()));
+                    String line;
+                    String newFullData = "";
+
+                    for (; (line = in.readLine()) != null; ) {
+
+                        newFullData += line ;
+
+
+                    }
+                    System.out.println(full);
+                    System.out.println(newFullData);
+                    if( full.compareTo(newFullData) != 0 )
+                    {
+                        System.out.print(full);
+                        full = newFullData;
+
+                        System.out.println("Stock Query  + "  +  newFullData);
+
+
+
+            }
+        }catch (Exception e )
+                {
+
+                }
+
+
+            }}
+
+                );
+
+            t.start();
+                }
             };
             b1.setOnClickListener(ocl);
-
-
-
-
-
             return rootView;
         }
 
